@@ -1,3 +1,4 @@
+from email.mime import image
 import os
 import base64
 import json
@@ -6,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataflow.core import LLMServingABC
 from openai import OpenAI
 from tqdm import tqdm
+import time
 
 from ..logger import get_logger
 
@@ -27,6 +29,7 @@ class APIVLMServing_openai(LLMServingABC):
         key_name_of_api_key: str = "DF_API_KEY",
         model_name: str = "o4-mini",
         max_workers: int = 10,
+        max_retries: int = 3,
         timeout: int = 1800,
         temperature = 0.0
     ):
@@ -41,6 +44,7 @@ class APIVLMServing_openai(LLMServingABC):
         self.api_url = api_url
         self.model_name = model_name
         self.max_workers = max_workers
+        self.max_retries = max_retries
         self.logger = get_logger()
         self.timeout = timeout
         self.temperature = temperature
@@ -121,8 +125,12 @@ class APIVLMServing_openai(LLMServingABC):
                 }
             }
         
-        resp = self.client.chat.completions.create(**request_params)
-        return resp.choices[0].message.content
+        try:
+            resp = self.client.chat.completions.create(**request_params)
+            return resp.choices[0].message.content
+        except Exception as e:
+            self.logger.error(f"Error during chat completion: {e}")
+            return None
 
     def chat_with_one_image(
         self,
@@ -288,8 +296,16 @@ class APIVLMServing_openai(LLMServingABC):
             timeout,
             json_schema
         )
-        self.logger.info(f"Request {request_id} completed")
+        # self.logger.info(f"Request {request_id} completed")
         return request_id, result
+    
+    def analyze_images_with_gpt_with_id_retry(self, image_paths, image_labels, request_id, system_prompt, model, timeout, json_schema):
+        for i in range(self.max_retries):
+            id, response = self.analyze_images_with_gpt_with_id(image_paths, image_labels, request_id, system_prompt, model, timeout, json_schema)
+            if response is not None:
+                return id, response
+            time.sleep(2**i)
+        return id, None
 
     def generate_from_input_multi_images(
         self,
@@ -326,7 +342,7 @@ class APIVLMServing_openai(LLMServingABC):
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = {
                 executor.submit(
-                    self.analyze_images_with_gpt_with_id,
+                    self.analyze_images_with_gpt_with_id_retry,
                     paths,
                     labels,
                     idx,

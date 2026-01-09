@@ -124,7 +124,7 @@ class APILLMServing_request(LLMServingABC):
                     'User-Agent': 'Apifox/1.0.0 (https://apifox.com)'
                 }
                 # Make a POST request to the API
-                response = requests.post(self.api_url, headers=headers, data=payload, timeout=1800)
+                response = requests.post(self.api_url, headers=headers, data=payload, timeout=1200)
                 if response.status_code == 200:
                     # logging.info(f"API request successful")
                     response_data = response.json()

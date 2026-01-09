@@ -28,6 +28,7 @@ class GeneralAnswerGeneratorPrompt(PromptABC):
         Format Requirements:
         - Prefix each step with "→" (use the actual arrow symbol, not its Unicode escape sequence)
         - Ensure all symbols and special characters are presented using appropriate markup (e.g., LaTeX commands for mathematical symbols, code formatting for code snippets)
+        - Put your final answer inside a box using LaTeX notation: \\boxed{your_answer_here}. If the question is a multiple-choice question, provide only the letter corresponding to your final answer (e.g., \\boxed{A}).
 
         Example Template:
         Task: Analyze the time complexity of the following sorting algorithm and prove its correctness.

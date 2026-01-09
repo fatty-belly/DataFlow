@@ -141,7 +141,7 @@ class LocalVLMServing_vllm(LLMServingABC):
             tensor_parallel_size=self.vllm_tensor_parallel_size,
             max_model_len=self.vllm_max_model_len,
             gpu_memory_utilization=self.vllm_gpu_memory_utilization,
-            limit_mm_per_prompt={"image": self.vllm_limit_mm_per_prompt}, # Specific config for image limits
+            limit_mm_per_prompt={"image": self.vllm_limit_mm_per_prompt, "video": 0}, # Specific config for image limits
             trust_remote_code=self.trust_remote_code
         )
         
@@ -272,6 +272,7 @@ class LocalVLMServing_vllm(LLMServingABC):
                     f"Request contains {len(current_images)} images, but limit is {self.vllm_limit_mm_per_prompt}. "
                     "This might cause vLLM errors. Increase `vllm_limit_mm_per_prompt` in init."
                 )
+                print(paths)
 
             # 2. 构建 User Content
             # 我们需要交替插入文本(Label)和图片占位符
